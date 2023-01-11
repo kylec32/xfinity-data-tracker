@@ -2,12 +2,14 @@ const puppeteer = require('puppeteer');
 const mqtt = require('mqtt');
 
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+    // console.log("Starting sleep for: " + ms + " " + new Date());
+  return new Promise(resolve => setTimeout(() => {resolve()}, ms));
 }
 
 (async function() {
     try {
         let usage = await getUsage();
+        //console.log(usage);
         sendToMqtt(usage);
     } catch (e) {
         console.error(e);
@@ -49,31 +51,53 @@ async function getUsage() {
             width:1920,
             height:1080
           }});
+        //   let browser = await puppeteer.launch();
+        
     
     let page = await browser.newPage();
     await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36");
     await page.goto('https://login.xfinity.com/login');
-    // await picture(page, 'initialLoadBefore');
+    await picture(page, 'initialLoadBefore');
     await page.waitForSelector('input[name=user]');
-    // await picture(page, 'initialLoadAfter');
-    sleep(1000);
-    // await picture(page, 'initialLoadAfterWait');
+    await picture(page, 'initialLoadAfter');
+    await sleep(1000);
+    await picture(page, 'initialLoadAfterWait');
     await page.focus('#user');
+    
     await page.keyboard.type(process.env['COMCAST_USERNAME']);
+    await page.keyboard.press('Enter');
     await picture(page, 'zzBeforeButton');
-    await page.click('#sign_in');
+    //await page.click('#sign_in');
+    await sleep(1000);
+    await picture(page, 'zzBetweenButtons');
+    //await page.click('#sign_in');
+    await sleep(10000);
     await picture(page, 'zzAfterLoginBeforeWait');
+    //return;
+    
     await picture(page, 'zzAfterLogin');
     await page.waitForSelector('input[name=passwd]');
     await page.focus('#passwd');
     await page.keyboard.type(process.env['COMCAST_PASSWORD']);
     await page.click('#sign_in');
+    await picture(page, 'zzAfterPassword');
     
     await sleep(10000);
+
+    await picture(page, 'zzAfterSleepAndPassword');
     
     await page.goto('https://customer.xfinity.com/');
     await sleep(10000);
+    await picture(page, 'zzAfterNavigate1');
+    // await page.goto('https://www.xfinity.com/learn/internet-service/auth')
+    await sleep(10000);
+    await picture(page, 'zzAfterNavigate2');
+    await page.goto('https://customer.xfinity.com/#/devices#usage')
+    await sleep(10000);
+    await picture(page, 'zzAfterNavigate3');
     await page.goto('https://customer.xfinity.com/apis/csp/account/me/services/internet/usage?filter=internet');
+    await sleep(1000)
+    await picture(page, 'zzAfterNavigate4');
     let content = JSON.parse(await page.$eval('*', (el) => el.innerText));
     let usage = content.usageMonths[content.usageMonths.length - 1].totalUsage;
     console.log(usage);

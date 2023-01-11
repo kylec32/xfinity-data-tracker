@@ -1,4 +1,4 @@
-FROM node:12-slim
+FROM node:lts
 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
@@ -23,6 +23,12 @@ RUN apt-get update \
 #     browser.launch({executablePath: 'google-chrome-stable'})
 # ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
+RUN mkdir /src
+
+RUN mkdir /pics
+COPY src /src
+WORKDIR /src
+
 # Install puppeteer so it's available in the container.
 RUN npm init -y &&  \
     npm i puppeteer \
@@ -31,17 +37,15 @@ RUN npm init -y &&  \
     && groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
     && mkdir -p /home/pptruser/Downloads \
     && chown -R pptruser:pptruser /home/pptruser \
-    && chown -R pptruser:pptruser /node_modules \
-    && chown -R pptruser:pptruser /package.json \
-    && chown -R pptruser:pptruser /package-lock.json
+    && chown -R pptruser:pptruser /src/node_modules \
+    && chown -R pptruser:pptruser /src/package.json \
+    && chown -R pptruser:pptruser /src/package-lock.json
 
 # Run everything after as non-privileged user.
 
-RUN mkdir /pics
-COPY src /
 
 RUN npm install
 
 USER pptruser
 
-CMD ["node", "/index.js"]
+CMD ["node", "/src/index.js"]
